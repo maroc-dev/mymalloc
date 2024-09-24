@@ -1,5 +1,5 @@
 
-PROGRAM = first
+PROGRAM = memtest
 
 all: $(PROGRAM)
 
