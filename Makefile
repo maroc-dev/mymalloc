@@ -1,5 +1,5 @@
 
-PROGRAM = memtest
+PROGRAM = test
 
 all: $(PROGRAM)
 
@@ -10,7 +10,4 @@ clean:
 	rm -f $(PROGRAM) $(PROGRAM).out
 
 run: $(PROGRAM)
-	./$(PROGRAM)
-
-test:
 	./$(PROGRAM).out
