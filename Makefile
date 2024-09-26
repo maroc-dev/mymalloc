@@ -1,13 +1,16 @@
+CC = gcc
+CFLAGS = -std=c99 -Wall -Wvla -fsanitize=address,undefined
 
-PROGRAM = test
+test: test.o mymalloc.o
+	$(CC) $(CFLAGS)  test.o mymalloc.o -o test
+	./test.out
 
-all: $(PROGRAM)
+test.o:  test.c
+	$(CC) $(CFLAGS)  -c test.c 
+	
 
-$(PROGRAM): $(PROGRAM).c
-	gcc -Wall -Werror -fsanitize=address,undefined -g -o $(PROGRAM).out $(PROGRAM).c -lm
+mymalloc.o: mymalloc.c
+	$(CC) $(CFLAGS)  -c mymalloc.c 
 
 clean:
 	rm -f $(PROGRAM) $(PROGRAM).out
-
-run: $(PROGRAM)
-	./$(PROGRAM).out
