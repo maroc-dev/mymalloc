@@ -26,6 +26,11 @@ void init()
 {
     atexit(leak_checker);
 
+    for (int i = 0; i < MEMSIZE; i++)
+    {
+        heap.bytes[i] = '.';
+    }
+
     // creates a metadata header
     metadata header;
     header.used = '0';                          // '0' means unallocated
@@ -49,35 +54,35 @@ void *mymalloc(size_t size, char *file, int line)
     }
 
     int i = 0;
-    int allocating = false;
+    metadata *current;
+    int allocated;
 
     do
     {
-        metadata *current = (metadata *)&heap.bytes[i];
+        current = (metadata *)&heap.bytes[i];
+        allocated = current->data_block;
         printf("Used: %c, Data Block: %u\n", current->used, current->data_block);
         if (current->used == '0' && size < current->data_block)
         {
-            int allocated = current->data_block;
             current->used = '1';
             current->data_block = size + 8;
-            printf("Used: %c, Data Block: %u\n", current->used, current->data_block);
+            // printf("Used: %c, Data Block: %u\n", current->used, current->data_block);
             metadata header;
             header.used = '0';
             header.data_block = allocated - size - 8;
 
-            memcpy(&heap.bytes[i+allocated/8], &header, sizeof(metadata));
+            memcpy(&heap.bytes[(i + size + 8)], &header, sizeof(metadata));
 
-            printf("\nSize of header: %u\n", header.data_block);
+            // printf("\nSize of header: %u\n", header.data_block);
 
-            printf("Used: %d, %d\n", current->data_block, header.data_block);
+            // printf("Used: %d, %d\n", current->data_block, header.data_block);
 
             return &heap.bytes[i + 8];
         }
 
-        break;
+        i += allocated;
 
-        // update current to size of data + 8
-    } while (allocating);
+    } while (i <= MEMSIZE);
 
     int *p = NULL;
     return p;
