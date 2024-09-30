@@ -4,52 +4,38 @@
 
 int main()
 {
-    int size = 1;
+    int size = 11;
+
     int *a = malloc(sizeof(int) * size);
 
     printf("Testing: %p", a);
 
     for (int i = 0; i < size; i++)
     {
-        a[i] = i;
+        a[i] = 'a';
     }
 
-    for (int i = 0; i < size; i++)
+    int *b = malloc(sizeof(double) * (size));
+
+    for (int i = 0; i < (size); i++)
     {
-        printf("\n%d\n", a[i]);
+        b[i] = 'b';
     }
+    print_heap();
 
-    int sizeb = 90;
-    int *b = malloc(sizeof(int) * sizeb);
+    free(a);
+    free(a);
 
-    for (int i = 0; i < sizeb; i++)
+    a = malloc(sizeof(int) * 2);
+
+    for (int i = 0; i < 2; i++)
     {
-        b[i] = i;
+        a[i] = 'c';
     }
 
-    for (int i = 0; i < sizeb; i++)
-    {
-        printf("\n%d\n", b[i]);
-    }
+    print_heap();
 
-    int sizec = 10;
-    int *c = malloc(sizeof(int) * sizec);
-
-    for (int i = 0; i < sizec; i++)
-    {
-        c[i] = i;
-    }
-
-    for (int i = 0; i < sizec; i++)
-    {
-        printf("\n%d\n", c[i]);
-    }
-
-    a[0] = 1000;
-    b[0] = 2000;
-    c[0] = 3000;
-
-    printf("Testing: %d, %d, %d", a[0], b[0], c[0]);
+    printf("Testing: %d\n", b[0]);
 
     return EXIT_SUCCESS;
 }
