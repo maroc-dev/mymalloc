@@ -26,16 +26,29 @@ int main()
     free(a);
     free(a);
 
-    a = malloc(sizeof(int) * 2);
+    int *c = malloc(sizeof(int) * 20);
 
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 5; i++)
     {
-        a[i] = 'c';
+        c[i] = 'c';
     }
 
     print_heap();
 
-    printf("Testing: %d\n", b[0]);
+    free(b);
+    print_heap();
+
+    int *d = malloc(sizeof(int) * 32);
+
+    for (int i = 0; i < 32; i++)
+    {
+        d[i] = 'd';
+    }
+
+    free(c);
+    free(d);
+
+    print_heap();
 
     return EXIT_SUCCESS;
 }

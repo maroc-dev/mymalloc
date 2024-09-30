@@ -4,21 +4,27 @@ A implementation of a malloc and free in c
 ## Authors
 maf407 - Marco Ferreira
 
-## Metadata
+QUESTIONS:
+1. For this given heap, our malloc decided to allocate in this position instead of the first available. This is because we check to see if a new header can be created as well. Is this good design?
 
-Metadata is a byte (8 bits) and this is the structure:
+```c
+PRINTING HEAP
+Used: 0, Data Block: 152
+Used: 1, Data Block: 88
+Used: 1, Data Block: 152 <-
+Used: 0, Data Block: 3696
+0�aaaaaaaaaaa0`bbbbbbbbbbb1Xccccc1-�-�ddddddddddddddddddddddddddddddddddd0-�-p
+END HEAP
+```
 
-0000 0000
-^
-Indicator on if the chunk is free or not
-0: free
-1: allocated
+2. sizeof(char) is 1 byte, however char literals are 4 bytes, how do we handle this with our malloc if someone tries the following:
 
-0000 0000
- ^^^ ^^^^
+```c
+char *c = malloc(sizeof(char) * 20);
 
-last 7 bits is the size of the data stored
+for (int i = 0; i < 20; i++){
+    c[i] = 'a';
+}
+```
 
-If the chunk is 1 address from the metadata 
-
-size_of an avaliable chunk would be the difference between the address point of metadata_chunk_2 and metadata_chunk_1
+3. Can I use memcpy(heap.bytes, &header, sizeof(metadata)); to allocate my metadata on to the 'heap'

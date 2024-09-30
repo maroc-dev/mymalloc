@@ -20,7 +20,7 @@ int isInit = false;
 
 void print_heap()
 {
-    printf("PRINTING HEAP\n");
+    printf("\nPRINTING HEAP\n");
     int i = 0;
     metadata *current;
     int allocated;
@@ -33,7 +33,13 @@ void print_heap()
         i += allocated;
 
     } while (i <= MEMSIZE && (heap.bytes[i] == '0' || heap.bytes[i] == '1'));
-    printf("END HEAP\n");
+
+    for (int i = 0; i < MEMSIZE; i++)
+    {
+        printf("%c", heap.bytes[i]);
+    }
+
+    printf("\nEND HEAP\n\n");
 }
 
 static void leak_checker(void)
@@ -43,11 +49,6 @@ static void leak_checker(void)
 void init()
 {
     atexit(leak_checker);
-
-    for (int i = 0; i < MEMSIZE; i++)
-    {
-        heap.bytes[i] = '.';
-    }
 
     // creates a metadata header
     metadata header;
@@ -62,8 +63,6 @@ void *mymalloc(size_t size, char *file, int line)
     // rounds size up to a multiple of 8
     size = (size + 7) & ~7;
 
-    printf("\nSIZE: %ld\n", size);
-
     if (!isInit)
     {
         // initializes the heap, adds the first metadata block
@@ -74,7 +73,6 @@ void *mymalloc(size_t size, char *file, int line)
     int i = 0;
     metadata *current;
     int allocated;
-    // print_heap();
     do
     {
         current = (metadata *)&heap.bytes[i];
@@ -88,9 +86,6 @@ void *mymalloc(size_t size, char *file, int line)
             header.data_block = allocated - size - HEADERSIZE;
             memcpy(&(heap.bytes[(i + size + HEADERSIZE)]), &header, sizeof(metadata));
 
-            // print_heap();
-            printf("\nindex: %d\n", i);
-
             return &(heap.bytes[i + HEADERSIZE]);
         }
 
@@ -101,12 +96,36 @@ void *mymalloc(size_t size, char *file, int line)
     return p;
 }
 
-void myfree(void *ptr, char *file, int line)
+void colaless()
 {
     int i = 0;
     metadata *current;
+    metadata *next;
     int allocated;
-    // print_heap();
+    do
+    {
+        current = (metadata *)&heap.bytes[i];
+        allocated = current->data_block;
+        next = (metadata *)&heap.bytes[i + allocated];
+
+        if (current->used == '0' && next->used == '0')
+        {
+            current->data_block += next->data_block;
+            continue;
+        }
+
+        i += allocated;
+    } while (i <= MEMSIZE && (heap.bytes[i] == '0' || heap.bytes[i] == '1'));
+}
+
+void myfree(void *ptr, char *file, int line)
+{
+    // colalessing free allocated space
+    int i = 0;
+    metadata *current;
+    int allocated;
+
+    // freeing
     do
     {
         current = (metadata *)&heap.bytes[i];
@@ -114,7 +133,7 @@ void myfree(void *ptr, char *file, int line)
         if (current->used == '1' && &(heap.bytes[i + HEADERSIZE]) == ptr)
         {
             current->used = '0';
-
+            colaless();
             return;
         }
 
