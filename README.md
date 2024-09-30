@@ -3,6 +3,7 @@ A implementation of a malloc and free in c
 
 ## Authors
 maf407 - Marco Ferreira
+raj123 - Ryan Jones
 
 QUESTIONS:
 1. For this given heap, our malloc decided to allocate in this position instead of the first available. This is because we check to see if a new header can be created as well. Is this good design?
