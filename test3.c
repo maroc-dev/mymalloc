@@ -21,11 +21,11 @@ printf("Test 3");
     for (int i = 0; i < 120; i++){
         int r = rand() % 2; //random between 0 and 1
         if (r==1){ // Repeatedly make a random choice between allocating a 1-byte object and deallocating previously allocated block
-          char *AThing = malloc(800);  // allocate a 1 byte object and add the pointer to the array [CORRUPTED TOP SIZE ERROR HOW FIX]
+          char *AThing = mymalloc(800);  // allocate a 1 byte object and add the pointer to the array [CORRUPTED TOP SIZE ERROR HOW FIX]
           PointArray[i] = AThing;
         } else if (i == 0 && PointArray[i - 1] != NULL) { // if result is zero and previous slot is not empty
             // Deallocate a previously allocated object
-            free(PointArray[i - 1]);
+            myfree(PointArray[i - 1]);
             PointArray[i - 1] = NULL;  // Set the pointer to NULL after freeing
         }
     }
