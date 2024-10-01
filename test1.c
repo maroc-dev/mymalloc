@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "mymalloc.h"
-
+// malloc() and immediately free() a 1-byte object, 120 times.
 int main()
 {
     int *a = mymalloc(sizeof(char));
