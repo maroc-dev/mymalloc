@@ -7,7 +7,7 @@
 int main()
 {
     
-    printf("Test 2\n");
+    printf("Test 2: use malloc to get 120 1-byte objects, store pointers in array, use free to deallocate chunks\n");
     char **TestArray = mymalloc(sizeof(char *) * 120); //initialize an array 120 long
 
     for (int i = 0; i < 120; i++){
