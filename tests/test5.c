@@ -15,11 +15,16 @@ int main(){
 
     printf("Test 5 pt 2: freeing NULL \n");
     char *noChunk = NULL;
-    myfree(noChunk);  // Freeing NULL 
+    myfree(noChunk);  // Freeing NULL (should work?)
 
     printf("Test 5 pt 3: ");
-    char *chunk = mymalloc(sizeof(char)); //create chunk
-    myfree(chunk); // free the chunk
-    char *chunk = mymalloc(sizeof(char)); //recreate the chunk
-    myfree(chunk); // free the chunk again
+    char *chunk = mymalloc(100000000000000); //create chunk too big
+    if (p == NULL){
+         printf("aa")
+              }
+     
+     printf("Test 5 pt 4: ");
+     int *p = malloc(100);
+     free(p+1); // should make error
+     
 }
