@@ -5,16 +5,6 @@
 // malloc() and immediately free() a 1-byte object, 120 times.
 int main()
 {
-    int *a = mymalloc(sizeof(char));
-
-    printf("Testing: %p", a);
-
-    int *arr = mymalloc(sizeof(int) * 10);
-
-    for (int i = 0; i <10; i++){
-        arr[i] = i;
-    }
-    myfree(arr);
 
     printf("Test 1");
     for (int i = 0; i < 120; i++){
