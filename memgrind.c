@@ -4,7 +4,7 @@
 #include "mymalloc.h"
 
 int main(){
-
+    // workload will be made up of test1, 2, 3, 4, and 6
     printf("workload starts NOW");
 
 
