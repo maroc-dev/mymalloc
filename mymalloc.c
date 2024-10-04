@@ -45,7 +45,27 @@ void print_heap()
 
 static void leak_checker(void)
 {
-    printf("\n\nLeak function running\n");
+    int i = 0;
+    metadata *current;
+    int allocated;
+
+    int num_objs_leaked = 0;
+    int total_leaked = 0;
+    do
+    {
+        current = (metadata *)&heap.bytes[i];
+        allocated = current->data_block;
+        if (current->used == '1')
+        {
+            num_objs_leaked++;
+            total_leaked += allocated;
+        }
+
+        i += allocated;
+    } while (i <= MEMSIZE && allocated != 0);
+
+    if (num_objs_leaked > 0)
+        printf("\nmymalloc: %d bytes leaked in %d objects.\n", total_leaked, num_objs_leaked);
 }
 
 void init()
@@ -107,10 +127,12 @@ void *mymalloc(size_t size, char *file, int line)
 
         // printf("i: %d, %d\n", i + size, MEMSIZE);
     } while (i < MEMSIZE && allocated != 0);
+
+    printf("\nmalloc: Unable to allocate %ld bytes (%s:%d)\n", size, file, line);
     return NULL;
 }
 
-void colaless()
+static void colaless()
 {
     int i = 0;
     metadata *current;
@@ -153,5 +175,6 @@ void myfree(void *ptr, char *file, int line)
         i += allocated;
     } while (i <= MEMSIZE && (heap.bytes[i] == '0' || heap.bytes[i] == '1'));
 
-    printf("Pointer not found");
+    printf("\nfree: Inappropriate pointer (%s:%d)", file, line);
+    exit(2);
 }

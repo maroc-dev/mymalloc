@@ -9,7 +9,7 @@ test: test.o mymalloc.o
 
 memtest: memtest.o mymalloc.o
 	$(CC) $(CFLAGS)  memtest.o mymalloc.o -o memtest
-	./memtest
+	./memtest -DLEAK
 
 test.o:  test.c
 	$(CC) $(CFLAGS)  -c test.c 
