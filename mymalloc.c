@@ -16,7 +16,7 @@ typedef struct metadata
     unsigned int data_block;
 } metadata;
 
-int isInit = false;
+static int isInit = false;
 
 void print_heap()
 {
