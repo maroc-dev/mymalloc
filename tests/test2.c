@@ -7,18 +7,18 @@
 int main()
 {
     
-    printf("Test 2: use malloc to get 120 1-byte objects, store pointers in array, use free to deallocate chunks\n");
-    char **TestArray = mymalloc(sizeof(char *) * 120); //initialize an array 120 long
+    printf("Test 2\n");
+    char **TestArray = malloc(sizeof(char *) * 120); //initialize an array 120 long
 
     for (int i = 0; i < 120; i++){
-        TestArray[i] = mymalloc(sizeof(char)); // allocate memory for each pointer
+        TestArray[i] = malloc(sizeof(char)); // allocate memory for each pointer
     }
 
 
     for (int i = 0; i < 120; i++){
-        myfree(TestArray[i]); // free each element
+        free(TestArray[i]); // free each element
     }
-  myfree(TestArray); // finally free array of pointers
+  free(TestArray); // finally free array of pointers
 
     return 0;
 }
