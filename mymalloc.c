@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-
 #include "mymalloc.h"
+
+// Compile with -DDEBUG to debug
+#ifndef DEBUG
+#define DEBUG 0
+#endif
 
 static union
 {
@@ -18,7 +21,7 @@ typedef struct metadata
 
 static int isInit = false;
 
-void print_heap()
+static void print_heap()
 {
     printf("\nPRINTING HEAP\n");
     int i = 0;
@@ -68,7 +71,7 @@ static void leak_checker(void)
         printf("\nmymalloc: %d bytes leaked in %d objects.\n", total_leaked, num_objs_leaked);
 }
 
-void init()
+static void init()
 {
     atexit(leak_checker);
 
@@ -77,7 +80,7 @@ void init()
     header.used = '0';                                   // '0' means unallocated
     header.data_block = sizeof(heap.bytes) - HEADERSIZE; // data block is the size of the heap -8 because of the header
 
-    memcpy(heap.bytes, &header, sizeof(metadata)); // copys over the header data
+    *(metadata *)(&(heap.bytes)) = header; // copys over the header data
 }
 
 void *mymalloc(size_t size, char *file, int line)
@@ -98,9 +101,6 @@ void *mymalloc(size_t size, char *file, int line)
     do
     {
 
-        if (i >= MEMSIZE)
-            break;
-
         current = (metadata *)&heap.bytes[i];
         allocated = current->data_block;
 
@@ -119,7 +119,11 @@ void *mymalloc(size_t size, char *file, int line)
             metadata header;
             header.used = '0';
             header.data_block = allocated - size - HEADERSIZE;
-            memcpy(&(heap.bytes[(i + size + HEADERSIZE)]), &header, sizeof(metadata));
+            *(metadata *)(&(heap.bytes[i + size + HEADERSIZE])) = header;
+
+            if (DEBUG)
+                print_heap();
+
             return &(heap.bytes[i + HEADERSIZE]);
         }
 
@@ -127,6 +131,9 @@ void *mymalloc(size_t size, char *file, int line)
 
         // printf("i: %d, %d\n", i + size, MEMSIZE);
     } while (i < MEMSIZE && allocated != 0);
+
+    if (DEBUG)
+        print_heap();
 
     printf("\nmalloc: Unable to allocate %ld bytes (%s:%d)\n", size, file, line);
     return NULL;
@@ -169,6 +176,10 @@ void myfree(void *ptr, char *file, int line)
         {
             current->used = '0';
             colaless();
+
+            if (DEBUG)
+                print_heap();
+
             return;
         }
 

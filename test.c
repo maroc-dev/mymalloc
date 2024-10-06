@@ -2,53 +2,77 @@
 #include <stdlib.h>
 #include "mymalloc.h"
 
+#define MEMSIZE 4096
+#define HEADERSIZE 8
+#define OBJECTS 64
+#define OBJSIZE (MEMSIZE / OBJECTS - HEADERSIZE)
+
 int main()
 {
-    int size = 11;
 
-    int *a = malloc(sizeof(int) * size);
+    // Size of arrays and linked lists
+    const int SIZE = 8;
 
-    printf("Testing: %p", a);
+    // arrays
+    int *arr = malloc(sizeof(int) * SIZE);
 
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < SIZE; i++)
     {
-        a[i] = 'a';
+        arr[i] = i;
     }
 
-    int *b = malloc(sizeof(double) * (size));
-
-    for (int i = 0; i < (size); i++)
+    // print arr
+    printf("Printing array: \n");
+    for (int i = 0; i < SIZE; i++)
     {
-        b[i] = 'b';
-    }
-    print_heap();
-
-    free(a);
-    free(a);
-
-    int *c = malloc(sizeof(int) * 20);
-
-    for (int i = 0; i < 5; i++)
-    {
-        c[i] = 'c';
+        printf("%d, \t", arr[i]);
     }
 
-    print_heap();
+    // freeing
+    free(arr);
 
-    free(b);
-    print_heap();
+    // linked lists
 
-    int *d = malloc(sizeof(int) * 32);
-
-    for (int i = 0; i < 32; i++)
+    typedef struct Node
     {
-        d[i] = 'd';
+        int data;
+        struct Node *next;
+    } Node;
+
+    Node *head = malloc(sizeof(Node));
+
+    Node *current = head;
+
+    for (int i = 0; i < SIZE; i++)
+    {
+
+        if (i == SIZE - 1)
+        {
+            current->data = i;
+            current->next = NULL;
+            break;
+        }
+        current->data = i;
+        current->next = malloc(sizeof(Node));
+        current = current->next;
     }
 
-    free(c);
-    free(d);
+    // Printing linked lists
+    printf("\nPrinting Linked Lists\n");
+    for (Node *current = head; current != NULL; current = current->next)
+    {
+        printf("%d, \t", current->data);
+    }
 
-    print_heap();
+    // Free the linked list
+    current = head;
+    while (current != NULL)
+    {
+        Node *next_node = current->next;
+        free(current);
+        current = next_node;
+    }
+    printf("\n\n");
 
     return EXIT_SUCCESS;
 }
