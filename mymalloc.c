@@ -8,6 +8,10 @@
 #define DEBUG 0
 #endif
 
+// Define macros to represent allocation status as characters
+#define ALLOCATED '1'
+#define FREE '0'
+
 static union
 {
     char bytes[MEMSIZE];
@@ -16,13 +20,19 @@ static union
 
 typedef struct metadata
 {
-    unsigned char used;
+    char used; // Still a char to store single-byte value
     unsigned int data_block;
 } metadata;
 
 static int isInit = false;
 
-void print_heap()
+/**
+ * @brief Prints the current state of the heap.
+ *
+ * This function iterates through the heap and prints whether each block is
+ * allocated or free, as well as the size of each block.
+ */
+static void print_heap()
 {
     printf("\nPRINTING HEAP\n");
     int i = 0;
@@ -33,7 +43,7 @@ void print_heap()
         current = (metadata *)&heap.bytes[i];
         allocated = current->data_block;
 
-        printf("Used: %c, Data Block: %u\n", current->used, current->data_block);
+        printf("Used: %s, Data Block: %u\n", current->used == ALLOCATED ? "ALLOCATED" : "FREE", current->data_block);
 
         i += allocated;
     } while (i < MEMSIZE && allocated != 0);
@@ -41,6 +51,13 @@ void print_heap()
     printf("\nEND HEAP\n\n");
 }
 
+/**
+ * @brief Checks for memory leaks and prints a summary.
+ *
+ * This function is called automatically upon program exit using `atexit()`.
+ * It scans through the heap and reports the number of leaked objects and the total
+ * number of bytes leaked.
+ */
 static void leak_checker(void)
 {
     int i = 0;
@@ -53,7 +70,7 @@ static void leak_checker(void)
     {
         current = (metadata *)&heap.bytes[i];
         allocated = current->data_block;
-        if (current->used == '1')
+        if (current->used == ALLOCATED)
         {
             num_objs_leaked++;
             total_leaked += allocated;
@@ -66,6 +83,14 @@ static void leak_checker(void)
         printf("\nmymalloc: %d bytes leaked in %d objects.\n", total_leaked, num_objs_leaked);
 }
 
+/**
+ * @brief Initializes the heap and sets up the first free block.
+ *
+ * This function is called when `mymalloc()` is called for the first time.
+ * It initializes the heap with a free block that covers the entire heap size,
+ * minus the metadata header size. It also registers the leak checker function
+ * to run on program exit.
+ */
 static void init()
 {
     atexit(leak_checker);
@@ -73,12 +98,24 @@ static void init()
 
     // Create initial metadata block
     metadata header;
-    header.used = '0';                                   // Unallocated
+    header.used = FREE;                                  // Unallocated
     header.data_block = sizeof(heap.bytes) - HEADERSIZE; // Remaining size for data
 
     *(metadata *)(&(heap.bytes)) = header; // Store header in heap
 }
 
+/**
+ * @brief Allocates memory from the heap.
+ *
+ * This function allocates `size` bytes from the heap. It searches for a free block
+ * large enough to satisfy the request and splits the block if necessary. If no
+ * suitable block is found, it returns `NULL`.
+ *
+ * @param size The number of bytes to allocate.
+ * @param file The source file where the allocation request was made (for debugging).
+ * @param line The line number in the source file where the allocation request was made (for debugging).
+ * @return A pointer to the allocated memory or `NULL` if allocation fails.
+ */
 void *mymalloc(size_t size, char *file, int line)
 {
     // Round size up to a multiple of 8
@@ -99,22 +136,22 @@ void *mymalloc(size_t size, char *file, int line)
         current = (metadata *)&heap.bytes[i];
         allocated = current->data_block;
 
-        if (current->used == '0' && (size <= current->data_block) && (i + size + HEADERSIZE == MEMSIZE))
+        if (current->used == FREE && (size <= current->data_block) && (i + size + HEADERSIZE == MEMSIZE))
         {
-            current->used = '1';
+            current->used = ALLOCATED;
             current->data_block = size;
 
             return &(heap.bytes[i + HEADERSIZE]);
         }
 
-        if (current->used == '0' && size + HEADERSIZE <= current->data_block)
+        if (current->used == FREE && size + HEADERSIZE <= current->data_block)
         {
-            current->used = '1';
+            current->used = ALLOCATED;
             current->data_block = size + HEADERSIZE;
             if (allocated > size + HEADERSIZE)
             {
                 metadata new_header;
-                new_header.used = '0';
+                new_header.used = FREE;
                 new_header.data_block = allocated - (size + HEADERSIZE);
                 *(metadata *)(&(heap.bytes[i + size + HEADERSIZE])) = new_header;
             }
@@ -132,6 +169,12 @@ void *mymalloc(size_t size, char *file, int line)
     return NULL;
 }
 
+/**
+ * @brief Attempts to coalesce adjacent free blocks into a single block.
+ *
+ * This function scans the heap and merges adjacent free blocks into a single
+ * larger block to reduce fragmentation and maximize the available space.
+ */
 static void coalesce()
 {
     int i = 0;
@@ -147,7 +190,7 @@ static void coalesce()
 
         next = (metadata *)&heap.bytes[i + allocated];
 
-        if (current->used == '0' && next->used == '0')
+        if (current->used == FREE && next->used == FREE)
         {
             current->data_block += next->data_block; // Merge blocks
             continue;                                // Recheck same block for further merging
@@ -157,6 +200,18 @@ static void coalesce()
     } while (i < MEMSIZE && allocated != 0);
 }
 
+/**
+ * @brief Frees a previously allocated block of memory.
+ *
+ * This function marks a block of memory as free. It checks if the pointer is valid,
+ * then marks the corresponding block as free and attempts to coalesce adjacent free
+ * blocks. If the pointer is invalid or was not allocated by `mymalloc()`, the
+ * program will print an error message and exit.
+ *
+ * @param ptr A pointer to the memory block to free.
+ * @param file The source file where the free request was made (for debugging).
+ * @param line The line number in the source file where the free request was made (for debugging).
+ */
 void myfree(void *ptr, char *file, int line)
 {
     if (ptr == NULL)
@@ -180,10 +235,10 @@ void myfree(void *ptr, char *file, int line)
         current = (metadata *)&heap.bytes[i];
         allocated = current->data_block;
 
-        if (current->used == '1' && &(heap.bytes[i + HEADERSIZE]) == ptr)
+        if (current->used == ALLOCATED && &(heap.bytes[i + HEADERSIZE]) == ptr)
         {
-            current->used = '0'; // Mark as free
-            coalesce();          // Attempt to merge adjacent free blocks
+            current->used = FREE; // Mark as free
+            coalesce();           // Attempt to merge adjacent free blocks
             if (DEBUG)
                 print_heap();
             return;

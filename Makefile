@@ -1,18 +1,25 @@
 CC = gcc
 CFLAGS = -std=c99 -Wall -Wvla -fsanitize=address,undefined -g
 
-TARGETS = mymalloc test memtest memgrind
+TARGETS = mymalloc example memtest memgrind
+TESTS = test test1 test2 test3 test4 test5 test6 test7 test8 test9 test10
+OBJ = $(TESTS:.c=.o)
 
-test: test.o mymalloc.o
-	$(CC) $(CFLAGS)  test.o mymalloc.o -o test
-	./test
+example: example.o mymalloc.o
+	$(CC) $(CFLAGS)  example.o mymalloc.o -o example
+	./example
+
+$(TESTS): %: tests/%.c mymalloc.o
+	$(CC) $(CFLAGS) -o $@ $< mymalloc.o
+	./$@
+	
 
 memtest: memtest.o mymalloc.o
 	$(CC) $(CFLAGS)  memtest.o mymalloc.o -o memtest
 	./memtest 
 
-test.o:  test.c
-	$(CC) $(CFLAGS)  -c test.c 
+example.o:  example.c
+	$(CC) $(CFLAGS)  -c example.c 
 
 memgrind: memgrind.o mymalloc.o
 	$(CC) $(CFLAGS) memgrind.o mymalloc.o -o memgrind
@@ -30,4 +37,5 @@ memtest.o: memtest.c
 clean:
 	rm -f *.o $(TARGETS)
 	rm -f *.out $(TARGETS)
+	rm -f *.o *.o $(TESTS)
 
