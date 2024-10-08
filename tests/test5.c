@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include "mymalloc.h"
 
-
+// These are supposed to print errors or crash
 int main(){
      
      int choice;
