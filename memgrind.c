@@ -12,6 +12,9 @@
 #define LARGE_ALLOC_SIZE 64 // 2 times larger than the ALLOC_SIZE
 #define ITERATIONS 50
 
+#define PASSED "\x1B[32m"
+#define NORMAL "\x1B[0m"
+
 // Function to get the current time in milliseconds
 long get_time_ms()
 {
@@ -173,7 +176,13 @@ void test_5()
 
 int main()
 {
-    printf("Workload starts NOW\n");
+    printf("Initiating memgrind testing:\n");
+
+    printf("Test 1: Allocating and immediately deallocating 1-byte objects 120 times\n");
+    printf("Test 2: Allocating and deallocating an array of 120 elements\n");
+    printf("Test 3: Randomly allocate or deallocate 1-byte objects until exactly 120 allocations have been made\n");
+    printf("Test 4: Test coalescing by freeing adjacent chunks and attempting to allocate a larger chunk\n");
+    printf("Test 5: Allocate and deallocate random-sized chunks in reverse\n");
 
     long total_time = 0;
 
@@ -191,7 +200,8 @@ int main()
         total_time += elapsed_time;
     }
 
-    printf("Average elapsed time: %ld milliseconds\n", total_time / ITERATIONS);
+    printf("\nALL TESTS: %sPASSED\n", PASSED);
+    printf("%sAverage elapsed time: %ld milliseconds\n", NORMAL, total_time / ITERATIONS);
 
     return EXIT_SUCCESS;
 }
