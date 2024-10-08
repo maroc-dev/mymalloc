@@ -32,8 +32,7 @@ int main(){
       if(choice==2){
       printf("Test 5 pt 2: freeing NULL \n");
       char *noChunk = NULL;
-      free(noChunk);  // Freeing NULL should work?
-      printf("i think this works");
+      free(noChunk);  //won't work for OUR malloc
       }
 
 
