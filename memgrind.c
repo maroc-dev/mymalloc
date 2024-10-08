@@ -175,20 +175,23 @@ int main()
 {
     printf("Workload starts NOW\n");
 
-    long start_time = get_time_ms(); // Get starting time
+    long total_time = 0;
+
     for (int i = 0; i < ITERATIONS; i++)
     {
+        long start_time = get_time_ms(); // Get starting time
         test_1();
         test_2();
         test_3();
         test_4();
         test_5();
+        long end_time = get_time_ms(); // Get ending time
+        long elapsed_time = end_time - start_time;
+
+        total_time += elapsed_time;
     }
 
-    long end_time = get_time_ms(); // Get ending time
-    long elapsed_time = end_time - start_time;
-
-    printf("Elapsed time: %ld milliseconds\n", elapsed_time);
+    printf("Average elapsed time: %ld milliseconds\n", total_time / ITERATIONS);
 
     return EXIT_SUCCESS;
 }
