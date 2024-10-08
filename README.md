@@ -31,4 +31,4 @@ We created more tests to ensure that our malloc function features worked correct
 
 ### Memgrind Runtime
 
-We used `gettimeofday()` to measure the runtime of our `Memgrind`. Regular `malloc` varied slightly but averaged around **203 milliseconds**, while our custom `malloc` took around **413 milliseconds**.
+We used `gettimeofday()` to measure the runtime of our `Memgrind`. Regular `malloc` varied slightly but averaged around **203 milliseconds**, while our custom `malloc` took around **413 milliseconds**. When averaging out those times we got a time of **6 milliseconds** per workload iteration with our 'malloc' versus **3 milliseconds** per iteration of regular 'malloc'.
