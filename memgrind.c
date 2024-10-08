@@ -10,6 +10,7 @@
 #define MAX_CHUNKS 100
 #define ALLOC_SIZE 32
 #define LARGE_ALLOC_SIZE 64 // 2 times larger than the ALLOC_SIZE
+#define ITERATIONS 50
 
 // Function to get the current time in milliseconds
 long get_time_ms()
@@ -175,12 +176,14 @@ int main()
     printf("Workload starts NOW\n");
 
     long start_time = get_time_ms(); // Get starting time
-
-    test_1();
-    test_2();
-    test_3();
-    test_4();
-    test_5();
+    for (int i = 0; i < ITERATIONS; i++)
+    {
+        test_1();
+        test_2();
+        test_3();
+        test_4();
+        test_5();
+    }
 
     long end_time = get_time_ms(); // Get ending time
     long elapsed_time = end_time - start_time;
