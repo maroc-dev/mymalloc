@@ -3,46 +3,19 @@
 #include <unistd.h>
 #include "mymalloc.h"
 
-#define OBJECTS 120
-
-void deallocate(void **PointArray)
-{
-    for (int i = 0; i < OBJECTS; i++)
-    {
-        if (PointArray[i] != NULL)
-        {
-            printf("\n%d\n", i);
-            free(PointArray[i]);
-
-            PointArray[i] = NULL;
-            return;
-        }
-    }
-}
-
-void deallocate_all(void **PointArray)
-{
-    for (int i = 0; i < OBJECTS; i++)
-    {
-        if (PointArray[i] != NULL)
-        {
-            free(PointArray[i]);
-            PointArray[i] = NULL;
-        }
-    }
-}
+#define OBJECTS 64
+#define OBJSIZE (MEMSIZE / OBJECTS - HEADERSIZE)
 
 int main()
 {
-    // workload will be made up of test1, 2, 3, 4, and 6
-    printf("workload starts NOW");
+    printf("workload starts NOW\n");
 
     for (int t = 0; t < 1; t++)
     {
-        printf("\nTest 1\n");
-        for (int i = 0; i < OBJECTS; i++)
+        printf("Test 1\n");
+        for (int i = 0; i < 120; i++)
         {
-            char *blob = malloc(sizeof(char)); // malloc and immediately deallocate an object of 1 byte OBJECTS times
+            char *blob = malloc(sizeof(char)); // malloc and immediately deallocate an object of 1 byte 120 times
             if (blob == NULL)
             {
                 printf("error");
@@ -50,58 +23,165 @@ int main()
             free(blob);
         }
 
-        print_heap();
-
         printf("Test 2\n");
-        char **TestArray = malloc(sizeof(char *) * OBJECTS); // initialize an array OBJECTS long
-
-        for (int i = 0; i < OBJECTS; i++)
+        char **TestArray = malloc(sizeof(char *) * 120); // initialize an array 120 long
+        for (int i = 0; i < 120; i++)
         {
             TestArray[i] = malloc(sizeof(char)); // allocate memory for each pointer
         }
 
-        for (int i = 0; i < OBJECTS; i++)
+        for (int i = 0; i < 120; i++)
         {
             free(TestArray[i]); // free each element
         }
         free(TestArray); // finally free array of pointers
-        print_heap();
 
-        printf("Test 3\n");
+        printf("Test 3!\n");
+        char *PointArray[120];
+        int allocatedCount = 0;
 
-        void *PointArray[OBJECTS]; // create an array for pointers
-
-        for (int i = 0; i < OBJECTS; i++)
+        for (int i = 0; i < 120; i++)
         {
-            PointArray[i] = NULL; // initialize the array to null to avoid freeing uninitialized pointers
+            PointArray[i] = NULL;
         }
 
-        int total_allocated = 0;
-
-        for (int i = 0; total_allocated <= OBJECTS; i++)
-        {
-            printf("This");
+        // Randomly allocate or deallocate 120 objects
+        while (allocatedCount < 120)
+        {                       // make sure to allocate exactly 120 times
             int r = rand() % 2; // random between 0 and 1
-            if (r == 1)
-            {                                         // Repeatedly make a random choice between allocating a 1-byte object and deallocating previously allocated block
-                PointArray[i] = malloc(sizeof(char)); // allocate a 1 byte object and add the pointer to the array
 
-                if (PointArray[i] == NULL)
+            if (r == 1 && allocatedCount < 120)
+            { // allocate if random == 1
+                // Find first empty slot
+                for (int j = 0; j < 120; j++)
                 {
-                    printf("Malloc failed!\n");
-                    break;
+                    if (PointArray[j] == NULL)
+                    {
+                        PointArray[j] = malloc(sizeof(char)); // allocate a 1-byte object and add the pointer to the array
+                        allocatedCount++;
+                        break;
+                    }
                 }
-                print_heap();
-                total_allocated++;
-                printf("\nAllocated: %p\t at index: %d\n", PointArray[i], i);
             }
-            else if (r == 0)
-            { // if result is zero and previous slot is not empty
-                // Deallocate a previously allocated object
-                printf("\nFreeing\n");
-                // deallocate(PointArray);
+            else if (r == 0 && allocatedCount > 0)
+            { // deallocate if random == 0 and something is allocated
+                // Find first allocated slot
+                for (int j = 0; j < 120; j++)
+                {
+                    if (PointArray[j] != NULL)
+                    {
+                        free(PointArray[j]);  // deallocate previously allocated object
+                        PointArray[j] = NULL; // set pointer to NULL after freeing
+                        allocatedCount--;
+                        break;
+                    }
+                }
             }
         }
-        deallocate_all(PointArray);
+
+        // Ensure any remaining objects are freed at the end
+        for (int i = 0; i < 120; i++)
+        {
+            if (PointArray[i] != NULL)
+            {
+                free(PointArray[i]);
+            }
+        }
+
+        printf("Test 4: testing coalescing\n");
+
+        void *chunks[1000];  // assume 1000 chunks is enough to fill all available memory space
+        int chunk_count = 0; // counter for array
+
+        // Fill memory with 64-byte chunks
+        while (1)
+        {
+            void *chunk = malloc(64); // allocate a 64-byte chunk WHY ARE YOU NOT FREEING
+            if (chunk == NULL || chunk_count > 999)
+            {
+                printf("Memory is full after allocating %d 64-byte chunks.\n", chunk_count);
+                break;
+            }
+            printf("Allocated chunk %d at %p\n", chunk_count, chunk); // Print the address of each allocated chunk
+            chunks[chunk_count++] = chunk;                            // Store the pointer in the array
+        }
+
+        // Free two adjacent chunks
+        if (chunk_count >= 2)
+        { // Check if at least two chunks were allocated
+            printf("Freeing chunks %d and %d at %p and %p\n",
+                   chunk_count - 1, chunk_count - 2,
+                   chunks[chunk_count - 1], chunks[chunk_count - 2]);
+
+            free(chunks[chunk_count - 1]);  // free the last chunk
+            chunks[chunk_count - 1] = NULL; // Prevent double-free
+            free(chunks[chunk_count - 2]);  // free the second-to-last chunk
+            chunks[chunk_count - 2] = NULL; // Prevent double-free
+            printf("Freed two 64-byte chunks.\n");
+        }
+        else
+        {
+            printf("Not enough chunks allocated to free two consecutive chunks.\n");
+        }
+
+        // Try to allocate a 128-byte chunk to test coalescing
+        void *large_chunk = malloc(128);
+        if (large_chunk != NULL)
+        {
+            printf("Successfully allocated a 128-byte chunk at %p. Coalescing works!\n", large_chunk);
+        }
+        else
+        {
+            printf("Failed to allocate a 128-byte chunk. Coalescing did not work.\n");
+        }
+
+        // Free all remaining chunks
+        for (int i = 0; i < chunk_count; i++)
+        {
+            if (chunks[i] != NULL)
+            {                     // if there's STILL SOMETHING THERE AT ALL IN THE ENTIRE CHUNKS POINBTER ARRAY
+                free(chunks[i]);  // Free the allocated chunk
+                chunks[i] = NULL; // Prevent double-free
+            }
+        }
+
+        // Free the large chunk if allocated
+        if (large_chunk != NULL)
+        {
+            free(large_chunk);
+            printf("large chunk freed\n");
+            large_chunk = NULL; // Prevent double-free
+        }
+
+        printf("Test 5\n");
+
+        void *pointers[120]; // array to store pointers to allocated memory
+        int sizes[120];      // array to store the sizes of the allocated chunks
+
+        // Allocate random-sized chunks
+        for (int i = 0; i < 60; i++)
+        {
+            sizes[i] = (rand() % 64) + 1;   // random size between 1 and 64 bytes
+            pointers[i] = malloc(sizes[i]); // allocate memory chunk
+            if (pointers[i] == NULL)
+            {
+                printf("Memory allocation failed at iteration %d\n", i);
+                exit(EXIT_FAILURE);
+            }
+            printf("Allocated %d bytes at pointers[%d]\n", sizes[i], i); // print allocation details
+        }
+
+        // Free in reverse order
+        for (int i = 119; i >= 0; i--)
+        {
+            if (pointers[i] != NULL)
+            {                      // Check if pointer is not NULL before freeing
+                free(pointers[i]); // Free the chunk
+                printf("Freed memory at pointers[%d]\n", i);
+                pointers[i] = NULL; // Set pointer to NULL after freeing
+            }
+        }
     }
+
+    return EXIT_SUCCESS;
 }
