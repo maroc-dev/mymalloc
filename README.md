@@ -62,7 +62,7 @@ We created more tests to ensure that our malloc function worked correctly. The w
   - 3: Freeing an offset pointer  
   - 4: Double freeing a chunk
 - **`test7.c`**: Allocates 10 long chunks, prints them out backwards, and then frees them.
-- **`test8.c`**: Allocates memory for a long chunk (size of a long), then prints the address and byte size.
+- **`test8.c`**: Allocates memory for a long chunk (size of a long), then prints the address and byte size. Doesn't free, expect a leak statement
 - **`test9.c`**: Attempts to allocate memory for a chunk with a negative size. This should fail.
 
 ### Memgrind Runtime
