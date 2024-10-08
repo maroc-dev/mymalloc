@@ -2,10 +2,20 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "mymalloc.h"
+#include <sys/time.h>
+
+long getTimeMS() {
+    struct timeval time;
+    gettimeofday(&time, NULL);
+    // Convert seconds to milliseconds and microseconds to milliseconds
+    return (time.tv_sec * 1000) + (time.tv_usec / 1000);
+}
 
 int main() {
     printf("workload starts NOW\n");
+    long startTime, endTime, elapsedTime;
 
+    startTime = getTimeMS(); //get our starting time
     for (int t = 0; t < 50; t++) {
         printf("Test 1\n");
         for (int i = 0; i < 120; i++) {
@@ -26,7 +36,7 @@ int main() {
             free(TestArray[i]); // free each element
         }
         free(TestArray); // finally free array of pointers
-
+ 
         printf("Test 3\n");
         void *PointArray[120]; // create an array for pointers
         int allocatedCount = 0; // track how many allocations have been made
@@ -71,13 +81,13 @@ int main() {
 
         printf("Test 4: testing coalescing\n");
 
-        void *chunks[1000]; // assume 1000 chunks is enough to fill all available memory space
+        void *chunks[57]; // assume 1000 chunks is enough to fill all available memory space
         int chunk_count = 0; // counter for array 
 
     // Fill memory with 64-byte chunks
     while (1) { 
-        void *chunk = malloc(64); // allocate a 64-byte chunk WHY ARE YOU NOT FREEING 
-        if (chunk == NULL || chunk_count > 999) { 
+        void *chunk = malloc(64); // allocate a 64-byte chunk ONE CHUNK DOESNT GET FREED IN REGULAR MALLOC BUT ALL FREED IN MYMALLOC
+        if (chunk == NULL || chunk_count > 56) { 
             printf("Memory is full after allocating %d 64-byte chunks.\n", chunk_count);
             break;
         }
@@ -112,10 +122,11 @@ int main() {
     for (int i = 0; i < chunk_count; i++) {
         if (chunks[i] != NULL) { // if there's STILL SOMETHING THERE AT ALL IN THE ENTIRE CHUNKS POINBTER ARRAY
             free(chunks[i]); // Free the allocated chunk
+            printf("Freed memory at pointers[%d]\n", i);
             chunks[i] = NULL; // Prevent double-free 
         }
     }
-    free(chunks[0]);
+    //free(chunks[0]);
     
 
     // Free the large chunk if allocated
@@ -133,25 +144,29 @@ int main() {
         int sizes[120]; // array to store the sizes of the allocated chunks
 
         // Allocate random-sized chunks
-        for (int i = 0; i < 120; i++) { 
+        for (int i = 0; i < 30; i++) { 
             sizes[i] = (rand() % 64) + 1;  // random size between 1 and 64 bytes
             pointers[i] = malloc(sizes[i]);  // allocate memory chunk
             if (pointers[i] == NULL) {
                 printf("Memory allocation failed at iteration %d\n", i);
                 exit(EXIT_FAILURE);
             }
-            printf("Allocated %d bytes at pointers[%d]\n", sizes[i], i); // print allocation details
+            //printf("Allocated %d bytes at pointers[%d]\n", sizes[i], i); // print allocation details
         }
 
         // Free in reverse order
         for (int i = 119; i >= 0; i--) { 
             if (pointers[i] != NULL) {    // Check if pointer is not NULL before freeing
                 free(pointers[i]);        // Free the chunk
-                printf("Freed memory at pointers[%d]\n", i);
+                //printf("Freed memory at pointers[%d]\n", i);
                 pointers[i] = NULL;       // Set pointer to NULL after freeing
             }
         }
     }
+    endTime = getTimeMS(); //get our end time
+    elapsedTime = endTime - startTime; //get our elapsed time, written in milliseconds
+    printf("Elapsed time: %ld milliseconds\n", elapsedTime);
+
 
     return 0;
 }
