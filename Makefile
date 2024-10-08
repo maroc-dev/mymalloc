@@ -5,6 +5,9 @@ TARGETS = mymalloc example memtest memgrind
 TESTS = test test1 test2 test3 test4 test5 test6 test7 test8 test9 test10
 OBJ = $(TESTS:.c=.o)
 
+memgrind: memgrind.o mymalloc.o
+	$(CC) $(CFLAGS) memgrind.o mymalloc.o -o memgrind
+
 example: example.o mymalloc.o
 	$(CC) $(CFLAGS)  example.o mymalloc.o -o example
 	./example
@@ -21,9 +24,7 @@ memtest: memtest.o mymalloc.o
 example.o:  example.c
 	$(CC) $(CFLAGS)  -c example.c 
 
-memgrind: memgrind.o mymalloc.o
-	$(CC) $(CFLAGS) memgrind.o mymalloc.o -o memgrind
-	./memgrind 
+
 
 memgrind.o: memgrind.c
 	$(CC) $(CFLAGS) -c memgrind.c 
