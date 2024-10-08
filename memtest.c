@@ -13,7 +13,6 @@
 #define LEAK 0
 #endif
 
-#define MEMSIZE 4096
 #define HEADERSIZE 8
 #define OBJECTS 64
 #define OBJSIZE (MEMSIZE / OBJECTS - HEADERSIZE)

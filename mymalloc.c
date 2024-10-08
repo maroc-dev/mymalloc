@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h> // for memset
 #include "mymalloc.h"
 
 // Compile with -DDEBUG to debug
@@ -10,7 +11,7 @@
 static union
 {
     char bytes[MEMSIZE];
-    double not_used;
+    double not_used; // To ensure alignment
 } heap;
 
 typedef struct metadata
@@ -21,7 +22,7 @@ typedef struct metadata
 
 static int isInit = false;
 
-static void print_heap()
+void print_heap()
 {
     printf("\nPRINTING HEAP\n");
     int i = 0;
@@ -35,13 +36,7 @@ static void print_heap()
         printf("Used: %c, Data Block: %u\n", current->used, current->data_block);
 
         i += allocated;
-
-    } while (i <= MEMSIZE && (heap.bytes[i] == '0' || heap.bytes[i] == '1'));
-
-    for (int i = 0; i < MEMSIZE; i++)
-    {
-        printf("%c", heap.bytes[i]);
-    }
+    } while (i < MEMSIZE && allocated != 0);
 
     printf("\nEND HEAP\n\n");
 }
@@ -65,7 +60,7 @@ static void leak_checker(void)
         }
 
         i += allocated;
-    } while (i <= MEMSIZE && allocated != 0);
+    } while (i < MEMSIZE && allocated != 0);
 
     if (num_objs_leaked > 0)
         printf("\nmymalloc: %d bytes leaked in %d objects.\n", total_leaked, num_objs_leaked);
@@ -74,23 +69,24 @@ static void leak_checker(void)
 static void init()
 {
     atexit(leak_checker);
+    memset(heap.bytes, 0, sizeof(heap.bytes)); // Initialize all bytes to 0
 
-    // creates a metadata header
+    // Create initial metadata block
     metadata header;
-    header.used = '0';                                   // '0' means unallocated
-    header.data_block = sizeof(heap.bytes) - HEADERSIZE; // data block is the size of the heap -8 because of the header
+    header.used = '0';                                   // Unallocated
+    header.data_block = sizeof(heap.bytes) - HEADERSIZE; // Remaining size for data
 
-    *(metadata *)(&(heap.bytes)) = header; // copys over the header data
+    *(metadata *)(&(heap.bytes)) = header; // Store header in heap
 }
 
 void *mymalloc(size_t size, char *file, int line)
 {
-    // rounds size up to a multiple of 8
+    // Round size up to a multiple of 8
     size = (size + 7) & ~7;
 
     if (!isInit)
     {
-        // initializes the heap, adds the first metadata block
+        // Initialize the heap and first metadata block
         init();
         isInit = true;
     }
@@ -100,7 +96,6 @@ void *mymalloc(size_t size, char *file, int line)
     int allocated;
     do
     {
-
         current = (metadata *)&heap.bytes[i];
         allocated = current->data_block;
 
@@ -116,30 +111,28 @@ void *mymalloc(size_t size, char *file, int line)
         {
             current->used = '1';
             current->data_block = size + HEADERSIZE;
-            metadata header;
-            header.used = '0';
-            header.data_block = allocated - size - HEADERSIZE;
-            *(metadata *)(&(heap.bytes[i + size + HEADERSIZE])) = header;
-
+            if (allocated > size + HEADERSIZE)
+            {
+                metadata new_header;
+                new_header.used = '0';
+                new_header.data_block = allocated - (size + HEADERSIZE);
+                *(metadata *)(&(heap.bytes[i + size + HEADERSIZE])) = new_header;
+            }
             if (DEBUG)
                 print_heap();
-
             return &(heap.bytes[i + HEADERSIZE]);
         }
 
         i += allocated;
-
-        // printf("i: %d, %d\n", i + size, MEMSIZE);
     } while (i < MEMSIZE && allocated != 0);
 
     if (DEBUG)
         print_heap();
-
     printf("\nmalloc: Unable to allocate %ld bytes (%s:%d)\n", size, file, line);
     return NULL;
 }
 
-static void colaless()
+static void coalesce()
 {
     int i = 0;
     metadata *current;
@@ -149,43 +142,56 @@ static void colaless()
     {
         current = (metadata *)&heap.bytes[i];
         allocated = current->data_block;
+        if (i + allocated >= MEMSIZE)
+            break;
+
         next = (metadata *)&heap.bytes[i + allocated];
 
         if (current->used == '0' && next->used == '0')
         {
-            current->data_block += next->data_block;
-            continue;
+            current->data_block += next->data_block; // Merge blocks
+            continue;                                // Recheck same block for further merging
         }
 
         i += allocated;
-    } while (i <= MEMSIZE && (heap.bytes[i] == '0' || heap.bytes[i] == '1'));
+    } while (i < MEMSIZE && allocated != 0);
 }
 
 void myfree(void *ptr, char *file, int line)
 {
+    if (ptr == NULL)
+    {
+        printf("\nfree: Invalid pointer address (%s:%d)\n", file, line);
+        return;
+    }
+
+    if (ptr < (void *)heap.bytes || ptr >= (void *)(heap.bytes + MEMSIZE))
+    {
+        printf("\nfree: Invalid pointer address (%s:%d)\n", file, line);
+        exit(2);
+    }
+
     int i = 0;
     metadata *current;
     int allocated;
 
-    // freeing
     do
     {
         current = (metadata *)&heap.bytes[i];
         allocated = current->data_block;
+
         if (current->used == '1' && &(heap.bytes[i + HEADERSIZE]) == ptr)
         {
-            current->used = '0';
-            colaless();
-
+            current->used = '0'; // Mark as free
+            coalesce();          // Attempt to merge adjacent free blocks
             if (DEBUG)
                 print_heap();
-
             return;
         }
 
         i += allocated;
-    } while (i <= MEMSIZE && (heap.bytes[i] == '0' || heap.bytes[i] == '1'));
+    } while (i < MEMSIZE && allocated != 0);
 
-    printf("\nfree: Inappropriate pointer (%s:%d)", file, line);
+    printf("\nfree: Invalid pointer (%s:%d)\n", file, line);
     exit(2);
 }

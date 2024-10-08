@@ -1,201 +1,191 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "mymalloc.h"
 #include <sys/time.h>
-
-long getTimeMS()
-{
-    struct timeval time;
-    gettimeofday(&time, NULL);
-    // Convert seconds to milliseconds and microseconds to milliseconds
-    return (time.tv_sec * 1000) + (time.tv_usec / 1000);
-}
+#include "mymalloc.h"
 
 #define OBJECTS 64
 #define OBJSIZE (MEMSIZE / OBJECTS - HEADERSIZE)
+#define TOTAL_ALLOCS 120
+#define MAX_CHUNKS 100
+#define ALLOC_SIZE 32
+#define LARGE_ALLOC_SIZE 64 // 2 times larger than the ALLOC_SIZE
 
-int main()
+// Function to get the current time in milliseconds
+long get_time_ms()
 {
-    printf("workload starts NOW\n");
-    long startTime, endTime, elapsedTime;
+    struct timeval time;
+    gettimeofday(&time, NULL);
+    return (time.tv_sec * 1000) + (time.tv_usec / 1000);
+}
 
-    startTime = getTimeMS(); // get our starting time
-    for (int t = 0; t < 50; t++)
+// Test 1: Allocate and immediately deallocate 1-byte objects 120 times
+void test_1()
+{
+    for (int i = 0; i < TOTAL_ALLOCS; i++)
     {
-        printf("Test 1\n");
-        for (int i = 0; i < 120; i++)
+        char *blob = malloc(sizeof(char));
+        if (blob == NULL)
         {
-            char *blob = malloc(sizeof(char)); // malloc and immediately deallocate an object of 1 byte 120 times
-            if (blob == NULL)
+            printf("Memory allocation error in Test 1\n");
+            exit(EXIT_FAILURE);
+        }
+        free(blob);
+    }
+}
+
+// Test 2: Allocate and free memory for an array of 120 elements
+void test_2()
+{
+    char **test_array = malloc(sizeof(char *) * TOTAL_ALLOCS);
+    for (int i = 0; i < TOTAL_ALLOCS; i++)
+    {
+        test_array[i] = malloc(sizeof(char));
+    }
+    for (int i = 0; i < TOTAL_ALLOCS; i++)
+    {
+        free(test_array[i]);
+    }
+    free(test_array);
+}
+
+// Test 3: Randomly allocate or deallocate 1-byte objects until exactly 120 allocations have been made
+void test_3()
+{
+    char *point_array[TOTAL_ALLOCS] = {NULL};
+    int allocated_count = 0;
+
+    while (allocated_count < TOTAL_ALLOCS)
+    {
+        int r = rand() % 2; // random between 0 and 1
+        if (r == 1 && allocated_count < TOTAL_ALLOCS)
+        {
+            for (int j = 0; j < TOTAL_ALLOCS; j++)
             {
-                printf("error");
-            }
-            free(blob);
-        }
-
-        printf("Test 2\n");
-        char **TestArray = malloc(sizeof(char *) * 120); // initialize an array 120 long
-        for (int i = 0; i < 120; i++)
-        {
-            TestArray[i] = malloc(sizeof(char)); // allocate memory for each pointer
-        }
-
-        for (int i = 0; i < 120; i++)
-        {
-            free(TestArray[i]); // free each element
-        }
-        free(TestArray); // finally free array of pointers
-
-        printf("Test 3!\n");
-        char *PointArray[120];
-        int allocatedCount = 0;
-
-        for (int i = 0; i < 120; i++)
-        {
-            PointArray[i] = NULL;
-        }
-
-        // Randomly allocate or deallocate 120 objects
-        while (allocatedCount < 120)
-        {                       // make sure to allocate exactly 120 times
-            int r = rand() % 2; // random between 0 and 1
-
-            if (r == 1 && allocatedCount < 120)
-            { // allocate if random == 1
-                // Find first empty slot
-                for (int j = 0; j < 120; j++)
+                if (point_array[j] == NULL)
                 {
-                    if (PointArray[j] == NULL)
-                    {
-                        PointArray[j] = malloc(sizeof(char)); // allocate a 1-byte object and add the pointer to the array
-                        allocatedCount++;
-                        break;
-                    }
-                }
-            }
-            else if (r == 0 && allocatedCount > 0)
-            { // deallocate if random == 0 and something is allocated
-                // Find first allocated slot
-                for (int j = 0; j < 120; j++)
-                {
-                    if (PointArray[j] != NULL)
-                    {
-                        free(PointArray[j]);  // deallocate previously allocated object
-                        PointArray[j] = NULL; // set pointer to NULL after freeing
-                        allocatedCount--;
-                        break;
-                    }
+                    point_array[j] = malloc(sizeof(char));
+                    allocated_count++;
+                    break;
                 }
             }
         }
-
-        // Ensure any remaining objects are freed at the end
-        for (int i = 0; i < 120; i++)
+        else if (r == 0 && allocated_count > 0)
         {
-            if (PointArray[i] != NULL)
+            for (int j = 0; j < TOTAL_ALLOCS; j++)
             {
-                free(PointArray[i]);
-            }
-        }
-
-        printf("Test 4: testing coalescing\n");
-
-        void *chunks[1000];  // assume 1000 chunks is enough to fill all available memory space
-        int chunk_count = 0; // counter for array
-
-        // Fill memory with 64-byte chunks
-        while (1)
-        {
-            void *chunk = malloc(64); // allocate a 64-byte chunk WHY ARE YOU NOT FREEING
-            if (chunk == NULL || chunk_count > 999)
-            {
-                printf("Memory is full after allocating %d 64-byte chunks.\n", chunk_count);
-                break;
-            }
-            printf("Allocated chunk %d at %p\n", chunk_count, chunk); // Print the address of each allocated chunk
-            chunks[chunk_count++] = chunk;                            // Store the pointer in the array
-        }
-
-        // Free two adjacent chunks
-        if (chunk_count >= 2)
-        { // Check if at least two chunks were allocated
-            printf("Freeing chunks %d and %d at %p and %p\n",
-                   chunk_count - 1, chunk_count - 2,
-                   chunks[chunk_count - 1], chunks[chunk_count - 2]);
-
-            free(chunks[chunk_count - 1]);  // free the last chunk
-            chunks[chunk_count - 1] = NULL; // Prevent double-free
-            free(chunks[chunk_count - 2]);  // free the second-to-last chunk
-            chunks[chunk_count - 2] = NULL; // Prevent double-free
-            printf("Freed two 64-byte chunks.\n");
-        }
-        else
-        {
-            printf("Not enough chunks allocated to free two consecutive chunks.\n");
-        }
-
-        // Try to allocate a 128-byte chunk to test coalescing
-        void *large_chunk = malloc(128);
-        if (large_chunk != NULL)
-        {
-            printf("Successfully allocated a 128-byte chunk at %p. Coalescing works!\n", large_chunk);
-        }
-        else
-        {
-            printf("Failed to allocate a 128-byte chunk. Coalescing did not work.\n");
-        }
-
-        // Free all remaining chunks
-        for (int i = 0; i < chunk_count; i++)
-        {
-            if (chunks[i] != NULL)
-            {                     // if there's STILL SOMETHING THERE AT ALL IN THE ENTIRE CHUNKS POINBTER ARRAY
-                free(chunks[i]);  // Free the allocated chunk
-                chunks[i] = NULL; // Prevent double-free
-            }
-        }
-
-        // Free the large chunk if allocated
-        if (large_chunk != NULL)
-        {
-            free(large_chunk);
-            printf("large chunk freed\n");
-            large_chunk = NULL; // Prevent double-free
-        }
-
-        printf("Test 5\n");
-
-        void *pointers[120]; // array to store pointers to allocated memory
-        int sizes[120];      // array to store the sizes of the allocated chunks
-
-        // Allocate random-sized chunks
-        for (int i = 0; i < 60; i++)
-        {
-            sizes[i] = (rand() % 64) + 1;   // random size between 1 and 64 bytes
-            pointers[i] = malloc(sizes[i]); // allocate memory chunk
-            if (pointers[i] == NULL)
-            {
-                printf("Memory allocation failed at iteration %d\n", i);
-                exit(EXIT_FAILURE);
-            }
-            // printf("Allocated %d bytes at pointers[%d]\n", sizes[i], i); // print allocation details
-        }
-
-        // Free in reverse order
-        for (int i = 119; i >= 0; i--)
-        {
-            if (pointers[i] != NULL)
-            {                      // Check if pointer is not NULL before freeing
-                free(pointers[i]); // Free the chunk
-                printf("Freed memory at pointers[%d]\n", i);
-                pointers[i] = NULL; // Set pointer to NULL after freeing
+                if (point_array[j] != NULL)
+                {
+                    free(point_array[j]);
+                    point_array[j] = NULL;
+                    allocated_count--;
+                    break;
+                }
             }
         }
     }
-    endTime = getTimeMS();             // get our end time
-    elapsedTime = endTime - startTime; // get our elapsed time, written in milliseconds
-    printf("Elapsed time: %ld milliseconds\n", elapsedTime);
+
+    for (int i = 0; i < TOTAL_ALLOCS; i++)
+    {
+        if (point_array[i] != NULL)
+        {
+            free(point_array[i]);
+        }
+    }
+}
+
+// Test 4: Test coalescing by freeing adjacent chunks and attempting to allocate a larger chunk
+void test_4()
+{
+    void *chunks[MAX_CHUNKS] = {NULL}; // Ensure chunks are initialized to NULL
+    int chunk_count = 0;
+
+    // Fill memory with 32-byte chunks
+    while (chunk_count < MAX_CHUNKS) // Prevent over-allocation
+    {
+        void *chunk = malloc(ALLOC_SIZE);
+        if (chunk == NULL)
+        {
+            break;
+        }
+        chunks[chunk_count++] = chunk;
+    }
+
+    // Free two adjacent chunks
+    if (chunk_count >= 2)
+    {
+        free(chunks[chunk_count - 1]);
+        chunks[chunk_count - 1] = NULL;
+        free(chunks[chunk_count - 2]);
+        chunks[chunk_count - 2] = NULL;
+    }
+
+    // Try to allocate a large chunk to test coalescing
+    void *large_chunk = malloc(LARGE_ALLOC_SIZE);
+    if (large_chunk != NULL)
+    {
+        free(large_chunk);
+        large_chunk = NULL; // Prevent double-free
+    }
+    else
+    {
+        printf("Failed to allocate a %d-byte chunk. Coalescing did not work.\n", LARGE_ALLOC_SIZE);
+    }
+
+    // Free all remaining chunks
+    for (int i = 0; i < chunk_count; i++)
+    {
+        if (chunks[i] != NULL)
+        {
+            free(chunks[i]);  // Free remaining chunks in the array
+            chunks[i] = NULL; // Set to NULL to avoid dangling pointers
+        }
+    }
+}
+
+// Test 5: Allocate and deallocate random-sized chunks in reverse
+void test_5()
+{
+    void *pointers[TOTAL_ALLOCS] = {NULL};
+    int sizes[TOTAL_ALLOCS] = {0};
+
+    for (int i = 0; i < TOTAL_ALLOCS / 2; i++)
+    {
+        sizes[i] = (rand() % ALLOC_SIZE) + 1;
+        pointers[i] = malloc(sizes[i]);
+        if (pointers[i] == NULL)
+        {
+            printf("Memory allocation failed at iteration %d\n", i);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    for (int i = TOTAL_ALLOCS - 1; i >= 0; i--)
+    {
+        if (pointers[i] != NULL)
+        {
+            free(pointers[i]);
+            pointers[i] = NULL;
+        }
+    }
+}
+
+int main()
+{
+    printf("Workload starts NOW\n");
+
+    long start_time = get_time_ms(); // Get starting time
+
+    test_1();
+    test_2();
+    test_3();
+    test_4();
+    test_5();
+
+    long end_time = get_time_ms(); // Get ending time
+    long elapsed_time = end_time - start_time;
+
+    printf("Elapsed time: %ld milliseconds\n", elapsed_time);
 
     return EXIT_SUCCESS;
 }

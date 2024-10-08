@@ -2,18 +2,15 @@
 #include <stdlib.h>
 #include "mymalloc.h"
 
-#define MEMSIZE 4096
-#define HEADERSIZE 8
-#define OBJECTS 64
-#define OBJSIZE (MEMSIZE / OBJECTS - HEADERSIZE)
+#define SIZE 50
 
 int main()
 {
 
     // Size of arrays and linked lists
-    const int SIZE = 8;
 
     // arrays
+
     int *arr = malloc(sizeof(int) * SIZE);
 
     for (int i = 0; i < SIZE; i++)
