@@ -2,6 +2,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "mymalloc.h"
+#include <sys/time.h>
+
+long getTimeMS()
+{
+    struct timeval time;
+    gettimeofday(&time, NULL);
+    // Convert seconds to milliseconds and microseconds to milliseconds
+    return (time.tv_sec * 1000) + (time.tv_usec / 1000);
+}
 
 #define OBJECTS 64
 #define OBJSIZE (MEMSIZE / OBJECTS - HEADERSIZE)
@@ -9,8 +18,10 @@
 int main()
 {
     printf("workload starts NOW\n");
+    long startTime, endTime, elapsedTime;
 
-    for (int t = 0; t < 1; t++)
+    startTime = getTimeMS(); // get our starting time
+    for (int t = 0; t < 50; t++)
     {
         printf("Test 1\n");
         for (int i = 0; i < 120; i++)
@@ -168,7 +179,7 @@ int main()
                 printf("Memory allocation failed at iteration %d\n", i);
                 exit(EXIT_FAILURE);
             }
-            printf("Allocated %d bytes at pointers[%d]\n", sizes[i], i); // print allocation details
+            // printf("Allocated %d bytes at pointers[%d]\n", sizes[i], i); // print allocation details
         }
 
         // Free in reverse order
@@ -182,6 +193,9 @@ int main()
             }
         }
     }
+    endTime = getTimeMS();             // get our end time
+    elapsedTime = endTime - startTime; // get our elapsed time, written in milliseconds
+    printf("Elapsed time: %ld milliseconds\n", elapsedTime);
 
     return EXIT_SUCCESS;
 }
