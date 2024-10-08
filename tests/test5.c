@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include "mymalloc.h"
 
-// These are supposed to print errors or crash
+
 int main(){
      
      int choice;
@@ -32,7 +32,8 @@ int main(){
       if(choice==2){
       printf("Test 5 pt 2: freeing NULL \n");
       char *noChunk = NULL;
-      free(noChunk);  //won't work for OUR malloc
+      free(noChunk);  //won't work for OUR malloc but won't crash
+      printf("if you see this, Hi :)");
       }
 
 
