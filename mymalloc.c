@@ -3,6 +3,11 @@
 #include <string.h> // for memset
 #include "mymalloc.h"
 
+#define MEMSIZE 4096
+#define HEADERSIZE 8
+#define true 1
+#define false 0
+
 // Compile with -DDEBUG to debug
 #ifndef DEBUG
 #define DEBUG 0

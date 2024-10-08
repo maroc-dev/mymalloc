@@ -5,6 +5,19 @@ A implementation of a malloc and free in c
 maf407 - Marco Ferreira 
 raj123 - Ryan Jones
 
+Requirements:
+1. malloc() reserves unallocated memory.
+2. When successful, malloc() returns a pointer to an object that does not overlap with any other
+allocated object.
+3. free() deallocates memory
+4. malloc() and free() arrange so that adjacent free blocks are coalesced
+5. Report if there are memory leaks at the programs end
+6. Report if malloc could not allocate memory.
+7. Report if there was given an invalid pointer
+8. Errors report with line numbers and what file the error was in.
+
+Our testing plan is guided by these requirements.
+
 ### Memgrind Workloads (Testing plan)
 
 Our `Memgrind` consists of the three given workloads, as well as two of our own creation.
