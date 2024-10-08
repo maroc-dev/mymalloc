@@ -7,5 +7,4 @@ int main(){ // allocate a chunk using arithmetic to determine size, try to print
     void *p = malloc(4+8);
     printf("Allocated memory at address: %p\n", p);
     free(p);
-    printf("Allocated memory at address: %p\n", p);
 }
