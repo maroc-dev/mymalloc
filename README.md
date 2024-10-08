@@ -56,7 +56,7 @@ These two workloads are implemented in `test4.c` and `test6.c`. The entire workl
 
 We created more tests to ensure that our malloc function worked correctly. The workloads in `memgrind` consist of `test1.c`, `test2.c`, `test3.c`, `test4.c`, and `test6.c`. Additionally, we have:
 
-- **`test5.c`**: Chooses a number between 1 and 4 to perform a specific test or trigger an error:  
+- **`test5.c`**: Chooses a number between 1 and 4 to perform a specific test to trigger an error:  
   - 1: Freeing an already deallocated pointer  
   - 2: Freeing a `NULL` pointer, which won’t work for our malloc and gives an appropriate message  
   - 3: Freeing an offset pointer  
