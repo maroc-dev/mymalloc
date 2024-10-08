@@ -13,7 +13,7 @@ Our `Memgrind` consists of the three given workloads, as well as two of our own 
    
 2. **Workload 2**: Allocate 30 chunks of random sizes between 1 and 64 bytes, then deallocate them in reverse order.
 
-These two workloads are implemented in `test4.c` and `test6.c`. The entire workload in `memgrind` was run 50 times. Memgrind also tested the performance of our Malloc
+These two workloads are implemented in `test4.c` and `test6.c`. The entire workload in `memgrind` was run 50 times. Memgrind also tested the performance of our mymalloc. We then compared the results to the real malloc
 
 ### Feature Tests
 
