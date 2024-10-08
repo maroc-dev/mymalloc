@@ -104,7 +104,7 @@ free(arr);
 ### Debugging
 Compile with -DDEBUG to print heap states.
 ```bash
-gcc -DDEBUG myallocator.c -o myallocator
+gcc -DDEBUG mymalloc.c -o mymalloc
 ```
 
 You can find example implementations in `example.c`.
