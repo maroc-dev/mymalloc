@@ -23,9 +23,30 @@ END HEAP
 ```c
 char *c = malloc(sizeof(char) * 20);
 
+
+
+
+
+
+
+
+
+
 for (int i = 0; i < 20; i++){
     c[i] = 'a';
 }
 ```
 
 3. Can I use memcpy(heap.bytes, &header, sizeof(metadata)); to allocate my metadata on to the 'heap'
+
+
+   Our Memgrind consists of the three given workloads as well as 2 of our own making. The first of which is to fill the heap with 64 byte chunks until there is no space left, deallocate the last 2 chunks and try to allocate a 128 byte chunk. This would also test that our coalescing works. The second workload would allocate 30 chunks of random sizes between 1 and 64 bytes and then deallocate them in reverse. These two workloads are also stated in test4.c and test6.c
+
+   In addition, we created more tests to determine that our malloc functioned properly.
+
+
+
+
+
+
+Our Memgrind consists of the three given workloads as well as 2 of our own making. The first of which is to fill the heap with 64 byte chunks until there is no space left, deallocate the last 2 chunks and try to allocate a 128 byte chunk. This would also test that our coalescing works. The second workload would
