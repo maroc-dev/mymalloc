@@ -26,7 +26,7 @@ We created more tests to ensure that our malloc function features worked correct
   - 4: Double freeing a chunk
 - **`test7.c`**: Allocates 10 long chunks, prints them out backwards, and then frees them.
 - **`test8.c`**: Allocates memory for a long chunk (size of a long), then prints the address and byte size. Doesn't free, expect a leak statement
-- **`test9.c`**: Attempts to allocate memory for a chunk with a negative size. This should fail.
+- **`test9.c`**: Attempts to allocate memory for a chunk with a negative size. **This should fail.**
 - **`test10.c`**: Attempts to allocate memory for a chunk using arithmetic to determine the size. Then prints the address.
 
 ### Memgrind Runtime
