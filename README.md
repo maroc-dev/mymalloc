@@ -2,8 +2,8 @@
 A implementation of a malloc and free in c 
 
 ## Authors
-maf407 - Marco Ferreira
-raj123 - Ryan Jones
+Marco Ferreira
+Ryan Jones
 
 ### Memgrind Workloads
 
